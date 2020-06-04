@@ -1,4 +1,4 @@
-module github.com/Rollcomp/procyon-transaction
+module github.com/Rollcomp/procyon-tx
 
 go 1.13
 
