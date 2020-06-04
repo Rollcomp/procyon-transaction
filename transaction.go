@@ -1,30 +1,56 @@
 package tx
 
-type TransactionInfo interface {
-	GetTransactionStatus() string
+type TransactionDefinitionOption func(definition *TransactionDefinition)
+
+type TransactionDefinition interface {
+	GetPropagation() TransactionPropagation
+	GetTransactionBlockObject() *TransactionBlockObject
 }
 
-type Transaction interface {
-	Begin()
-	Rollback()
-	Commit()
+type DefaultTransactionDefinition struct {
+	txBlockObj *TransactionBlockObject
 }
 
-type SimpleTransaction struct {
+func NewTransactionDefinition(txBlockObj *TransactionBlockObject) *DefaultTransactionDefinition {
+	def := &DefaultTransactionDefinition{
+		txBlockObj,
+	}
+	return def
 }
 
-func NewSimpleTransaction() SimpleTransaction {
-	return SimpleTransaction{}
+func (txDef *DefaultTransactionDefinition) GetPropagation() TransactionPropagation {
+	return txDef.txBlockObj.GetPropagation()
 }
 
-func (tx SimpleTransaction) Begin() {
-
+func (txDef *DefaultTransactionDefinition) GetTransactionBlockObject() *TransactionBlockObject {
+	return txDef.txBlockObj
 }
 
-func (tx SimpleTransaction) Rollback() {
-
+type TransactionStatusInfo interface {
+	GetTransaction() interface{}
+	IsCompleted() bool
 }
 
-func (tx SimpleTransaction) Commit() {
+type DefaultTransactionStatusInfo struct {
+	tx          interface{}
+	isCompleted bool
+}
 
+func NewTransactionStatusInfo(transaction interface{}) *DefaultTransactionStatusInfo {
+	return &DefaultTransactionStatusInfo{
+		transaction,
+		false,
+	}
+}
+
+func (txStatus *DefaultTransactionStatusInfo) SetCompleted(isCompleted bool) {
+	txStatus.isCompleted = isCompleted
+}
+
+func (txStatus *DefaultTransactionStatusInfo) GetTransaction() interface{} {
+	return txStatus.tx
+}
+
+func (txStatus *DefaultTransactionStatusInfo) IsCompleted() bool {
+	return txStatus.isCompleted
 }
