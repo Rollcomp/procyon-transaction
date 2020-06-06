@@ -18,34 +18,34 @@ type TransactionDefinition interface {
 	IsReadOnly() bool
 }
 
-type DefaultTransactionDefinitionOption func(txDef *DefaultTransactionDefinition)
+type SimpleTransactionDefinitionOption func(txDef *SimpleTransactionDefinition)
 
-func WithTxPropagation(propagation TransactionPropagation) DefaultTransactionDefinitionOption {
-	return func(txDef *DefaultTransactionDefinition) {
+func WithTxPropagation(propagation TransactionPropagation) SimpleTransactionDefinitionOption {
+	return func(txDef *SimpleTransactionDefinition) {
 		txDef.propagation = propagation
 	}
 }
 
-func WithTxTimeout(timeOut int) DefaultTransactionDefinitionOption {
-	return func(txDef *DefaultTransactionDefinition) {
+func WithTxTimeout(timeOut int) SimpleTransactionDefinitionOption {
+	return func(txDef *SimpleTransactionDefinition) {
 		txDef.timeOut = timeOut
 	}
 }
 
-func WithTxReadOnly(readOnly bool) DefaultTransactionDefinitionOption {
-	return func(txDef *DefaultTransactionDefinition) {
+func WithTxReadOnly(readOnly bool) SimpleTransactionDefinitionOption {
+	return func(txDef *SimpleTransactionDefinition) {
 		txDef.readOnly = readOnly
 	}
 }
 
-type DefaultTransactionDefinition struct {
+type SimpleTransactionDefinition struct {
 	propagation TransactionPropagation
 	timeOut     int
 	readOnly    bool
 }
 
-func NewDefaultTransactionDefinition(options ...DefaultTransactionDefinitionOption) *DefaultTransactionDefinition {
-	def := &DefaultTransactionDefinition{
+func NewSimpleTransactionDefinition(options ...SimpleTransactionDefinitionOption) *SimpleTransactionDefinition {
+	def := &SimpleTransactionDefinition{
 		PropagationRequired,
 		-1,
 		false,
@@ -56,15 +56,15 @@ func NewDefaultTransactionDefinition(options ...DefaultTransactionDefinitionOpti
 	return def
 }
 
-func (txDef *DefaultTransactionDefinition) GetPropagation() TransactionPropagation {
+func (txDef *SimpleTransactionDefinition) GetPropagation() TransactionPropagation {
 	return txDef.propagation
 }
 
-func (txDef *DefaultTransactionDefinition) GetTimeout() int {
+func (txDef *SimpleTransactionDefinition) GetTimeout() int {
 	return txDef.timeOut
 }
 
-func (txDef *DefaultTransactionDefinition) IsReadOnly() bool {
+func (txDef *SimpleTransactionDefinition) IsReadOnly() bool {
 	return txDef.readOnly
 }
 
@@ -76,14 +76,16 @@ type TransactionStatus interface {
 }
 
 type defaultTransactionStatus struct {
-	tx                 interface{}
+	txObj              TransactionObject
+	txDef              TransactionDefinition
 	isCompleted        bool
 	suspendedResources interface{}
 }
 
-func newDefaultTransactionStatus(transaction interface{}, suspendedResources interface{}) *defaultTransactionStatus {
+func newDefaultTransactionStatus(txObj TransactionObject, txDef TransactionDefinition, suspendedResources interface{}) *defaultTransactionStatus {
 	return &defaultTransactionStatus{
-		transaction,
+		txObj,
+		txDef,
 		false,
 		suspendedResources,
 	}
@@ -93,8 +95,16 @@ func (txStatus *defaultTransactionStatus) SetCompleted() {
 	txStatus.isCompleted = true
 }
 
+func (txStatus *defaultTransactionStatus) GetTransactionObject() TransactionObject {
+	return txStatus.txObj
+}
+
+func (txStatus *defaultTransactionStatus) GetTransactionDefinition() TransactionDefinition {
+	return txStatus.txDef
+}
+
 func (txStatus *defaultTransactionStatus) GetTransaction() interface{} {
-	return txStatus.tx
+	return txStatus.txObj.GetTransaction()
 }
 
 func (txStatus *defaultTransactionStatus) IsCompleted() bool {
