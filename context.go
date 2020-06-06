@@ -38,7 +38,7 @@ func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options
 	}
 	txBlockObject := NewTransactionBlockObject(fun, options...)
 	/* convert tx block object into tx block definition */
-	txBlockDef := NewDefaultTransactionDefinition(
+	txBlockDef := NewSimpleTransactionDefinition(
 		WithTxPropagation(txBlockObject.propagation),
 		WithTxReadOnly(txBlockObject.readOnly),
 		WithTxTimeout(txBlockObject.timeOut),
