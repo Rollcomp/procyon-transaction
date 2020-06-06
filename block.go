@@ -1,6 +1,6 @@
 package tx
 
-type TransactionalFunc interface{}
+type TransactionalFunc func()
 type TransactionBlockOption func(txBlockObj *TransactionBlockObject)
 
 type TransactionBlockObject struct {
