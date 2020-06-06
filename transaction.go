@@ -15,6 +15,7 @@ type TransactionDefinitionOption func(definition *TransactionDefinition)
 type TransactionDefinition interface {
 	GetTimeout() int
 	GetPropagation() TransactionPropagation
+	IsReadOnly() bool
 }
 
 type DefaultTransactionDefinitionOption func(txDef *DefaultTransactionDefinition)
@@ -25,21 +26,29 @@ func WithTxPropagation(propagation TransactionPropagation) DefaultTransactionDef
 	}
 }
 
-func WithTxTimeout(timeout int) DefaultTransactionDefinitionOption {
+func WithTxTimeout(timeOut int) DefaultTransactionDefinitionOption {
 	return func(txDef *DefaultTransactionDefinition) {
-		txDef.timeout = timeout
+		txDef.timeOut = timeOut
+	}
+}
+
+func WithTxReadOnly(readOnly bool) DefaultTransactionDefinitionOption {
+	return func(txDef *DefaultTransactionDefinition) {
+		txDef.readOnly = readOnly
 	}
 }
 
 type DefaultTransactionDefinition struct {
 	propagation TransactionPropagation
-	timeout     int
+	timeOut     int
+	readOnly    bool
 }
 
 func NewDefaultTransactionDefinition(options ...DefaultTransactionDefinitionOption) *DefaultTransactionDefinition {
 	def := &DefaultTransactionDefinition{
 		PropagationRequired,
 		-1,
+		false,
 	}
 	for _, option := range options {
 		option(def)
@@ -52,7 +61,11 @@ func (txDef *DefaultTransactionDefinition) GetPropagation() TransactionPropagati
 }
 
 func (txDef *DefaultTransactionDefinition) GetTimeout() int {
-	return txDef.timeout
+	return txDef.timeOut
+}
+
+func (txDef *DefaultTransactionDefinition) IsReadOnly() bool {
+	return txDef.readOnly
 }
 
 type TransactionStatus interface {

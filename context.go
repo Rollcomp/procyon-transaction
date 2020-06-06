@@ -2,7 +2,6 @@ package tx
 
 import (
 	"github.com/google/uuid"
-	"log"
 )
 
 type TransactionalContext interface {
@@ -33,14 +32,22 @@ func NewSimpleTransactionalContext(transactionManager TransactionManager) *Simpl
 	}
 }
 
-func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) error {
+func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) {
+	if fun == nil {
+		panic("Transaction function must not be null")
+	}
 	txBlockObject := NewTransactionBlockObject(fun, options...)
-	log.Print(txBlockObject)
-	txBlockDef := NewDefaultTransactionDefinition()
+	/* convert tx block object into tx block definition */
+	txBlockDef := NewDefaultTransactionDefinition(
+		WithTxPropagation(txBlockObject.propagation),
+		WithTxReadOnly(txBlockObject.readOnly),
+		WithTxTimeout(txBlockObject.timeOut),
+	)
+	/* invoke within transaction */
 	invokeWithinTransaction(txBlockDef, tContext.GetTransactionManager(), func() {
-
+		txFunc := txBlockObject.fun
+		txFunc()
 	})
-	return nil
 }
 
 func (tContext *SimpleTransactionalContext) GetContextId() uuid.UUID {

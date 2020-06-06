@@ -6,12 +6,16 @@ type TransactionBlockOption func(txBlockObj *TransactionBlockObject)
 type TransactionBlockObject struct {
 	fun         TransactionalFunc
 	propagation TransactionPropagation
+	readOnly    bool
+	timeOut     int
 }
 
 func NewTransactionBlockObject(fun TransactionalFunc, options ...TransactionBlockOption) *TransactionBlockObject {
 	obj := &TransactionBlockObject{
 		fun,
 		PropagationRequired,
+		false,
+		TransactionMinTimeout,
 	}
 	for _, opt := range options {
 		opt(obj)
@@ -27,12 +31,32 @@ func (txBlockObj *TransactionBlockObject) GetPropagation() TransactionPropagatio
 	return txBlockObj.propagation
 }
 
+func (txBlockObj *TransactionBlockObject) GetTimeOut() int {
+	return txBlockObj.timeOut
+}
+
+func (txBlockObj *TransactionBlockObject) IsReadOnly() bool {
+	return txBlockObj.readOnly
+}
+
 type TransactionalBlock interface {
-	Block(fun TransactionalFunc, options ...TransactionBlockOption) error
+	Block(fun TransactionalFunc, options ...TransactionBlockOption)
 }
 
 func WithPropagation(propagation TransactionPropagation) TransactionBlockOption {
 	return func(txBlockObj *TransactionBlockObject) {
 		txBlockObj.propagation = propagation
+	}
+}
+
+func WithTimeout(timeOut int) TransactionBlockOption {
+	return func(txBlockObj *TransactionBlockObject) {
+		txBlockObj.timeOut = timeOut
+	}
+}
+
+func WithReadOnly(readOnly bool) TransactionBlockOption {
+	return func(txBlockObj *TransactionBlockObject) {
+		txBlockObj.readOnly = readOnly
 	}
 }
