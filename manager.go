@@ -6,7 +6,7 @@ type TransactionManagerAdapter interface {
 	DoGetTransaction() TransactionObject
 	DoBeginTransaction(txObj TransactionObject, txDef TransactionDefinition)
 	DoSuspendTransaction(txObj TransactionObject) TransactionSuspendedResources
-	DoResumeTransaction(txObj TransactionObject)
+	DoResumeTransaction(txObj TransactionObject, txSuspendedResources interface{})
 	DoCommitTransaction(txStatus TransactionStatus)
 	DoRollback(txStatus TransactionStatus)
 	IsExistingTransaction(txObj TransactionObject) bool
@@ -99,7 +99,7 @@ func (txManager *AbstractTransactionManager) handleExistingTransaction(txObj Tra
 		// if there is an existing transaction, first suspend it
 		// don't create new one
 		txSuspendedResources := txManager.suspendTransaction(txObj)
-		return newDefaultTransactionStatus(txObj, txDef, txSuspendedResources)
+		return newDefaultTransactionStatus(nil, txDef, txSuspendedResources)
 	} else if txDef.GetPropagation() == PropagationRequiredNew {
 		// suspend current transaction, then new start transaction
 		txManager.startTransaction(txObj, txDef)
@@ -118,4 +118,13 @@ func (txManager *AbstractTransactionManager) startTransaction(txObj TransactionO
 
 func (txManager *AbstractTransactionManager) suspendTransaction(txObj TransactionObject) TransactionSuspendedResources {
 	return txManager.DoSuspendTransaction(txObj)
+}
+
+func (txManager *AbstractTransactionManager) resumeTransaction(txObj TransactionObject, txSuspendedResources TransactionSuspendedResources) {
+	if txSuspendedResources != nil {
+		suspendedResources := txSuspendedResources.GetSuspendedResources()
+		if suspendedResources != nil {
+			txManager.DoResumeTransaction(txObj, suspendedResources)
+		}
+	}
 }
