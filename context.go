@@ -8,13 +8,13 @@ type TransactionalContext interface {
 	TransactionalBlock
 	GetContextId() uuid.UUID
 	GetTransactionManager() TransactionManager
-	GetTransactionContextResources() TransactionContextResources
+	GetTransactionResourcesManager() TransactionResourcesManager
 }
 
 type SimpleTransactionalContext struct {
-	contextId            uuid.UUID
-	transactionManager   TransactionManager
-	transactionResources TransactionContextResources
+	contextId               uuid.UUID
+	transactionManager      TransactionManager
+	transactionResourcesMgr TransactionResourcesManager
 }
 
 func NewSimpleTransactionalContext(transactionManager TransactionManager) *SimpleTransactionalContext {
@@ -28,7 +28,7 @@ func NewSimpleTransactionalContext(transactionManager TransactionManager) *Simpl
 	return &SimpleTransactionalContext{
 		contextId,
 		transactionManager,
-		NewSimpleTransactionContextResources(),
+		NewSimpleTransactionResourcesManager(NewSimpleTransactionResources()),
 	}
 }
 
@@ -58,6 +58,6 @@ func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionM
 	return tContext.transactionManager
 }
 
-func (tContext *SimpleTransactionalContext) GetTransactionContextResources() TransactionContextResources {
-	return tContext.transactionResources
+func (tContext *SimpleTransactionalContext) GetTransactionResourcesManager() TransactionResourcesManager {
+	return tContext.transactionResourcesMgr
 }
