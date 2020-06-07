@@ -61,7 +61,7 @@ func (txDef *SimpleTransactionDefinition) IsReadOnly() bool {
 }
 
 type TransactionStatus interface {
-	GetTransactionObject() interface{}
+	GetTransaction() interface{}
 	GetTransactionDefinition() TransactionDefinition
 	IsCompleted() bool
 	SetCompleted()
@@ -88,7 +88,7 @@ func (txStatus *defaultTransactionStatus) SetCompleted() {
 	txStatus.isCompleted = true
 }
 
-func (txStatus *defaultTransactionStatus) GetTransactionObject() interface{} {
+func (txStatus *defaultTransactionStatus) GetTransaction() interface{} {
 	return txStatus.txObj
 }
 
