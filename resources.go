@@ -60,7 +60,7 @@ func (tr SimpleTransactionResources) RemoveResource(key interface{}) interface{}
 type TransactionResourcesManager interface {
 	GetResource(key interface{}) interface{}
 	BindResource(key interface{}, resource interface{})
-	UnBindResource(key interface{})
+	UnBindResource(key interface{}) interface{}
 }
 
 type SimpleTransactionResourcesManager struct {
@@ -92,7 +92,7 @@ func (resourceManager SimpleTransactionResourcesManager) BindResource(key interf
 	resources.AddResource(key, value)
 }
 
-func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key interface{}) {
+func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key interface{}) interface{} {
 	resources := resourceManager.resources
 	if resources == nil {
 		panic("Transactional context resources must not be nil")
@@ -100,5 +100,5 @@ func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key inte
 	if !resources.ContainsResource(key) {
 		panic("There is no resource for given key in transactional context")
 	}
-	resources.RemoveResource(key)
+	return resources.RemoveResource(key)
 }

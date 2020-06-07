@@ -3,13 +3,13 @@ package tx
 import "errors"
 
 type TransactionManagerAdapter interface {
-	DoGetTransaction() TransactionObject
-	DoBeginTransaction(txObj TransactionObject, txDef TransactionDefinition)
-	DoSuspendTransaction(txObj TransactionObject) TransactionSuspendedResources
-	DoResumeTransaction(txObj TransactionObject, txSuspendedResources interface{})
+	DoGetTransaction() interface{}
+	DoBeginTransaction(txObj interface{}, txDef TransactionDefinition)
+	DoSuspendTransaction(txObj interface{}) interface{}
+	DoResumeTransaction(txObj interface{}, txSuspendedResources interface{})
 	DoCommitTransaction(txStatus TransactionStatus)
-	DoRollback(txStatus TransactionStatus)
-	IsExistingTransaction(txObj TransactionObject) bool
+	DoRollbackTransaction(txStatus TransactionStatus)
+	IsExistingTransaction(txObj interface{}) bool
 	SupportsPropagation(propagation TransactionPropagation) bool
 }
 
@@ -86,11 +86,11 @@ func (txManager *AbstractTransactionManager) Rollback(txStatus TransactionStatus
 		return errors.New("transaction is already completed")
 	}
 	defer txStatus.SetCompleted()
-	txManager.DoRollback(txStatus)
+	txManager.DoRollbackTransaction(txStatus)
 	return nil
 }
 
-func (txManager *AbstractTransactionManager) handleExistingTransaction(txObj TransactionObject, txDef TransactionDefinition) TransactionStatus {
+func (txManager *AbstractTransactionManager) handleExistingTransaction(txObj interface{}, txDef TransactionDefinition) TransactionStatus {
 	// if there is an existing transaction, throw an error
 	if txDef.GetPropagation() == PropagationNever {
 		panic("Propagation never does not support an existing transaction which was created before")
@@ -109,22 +109,19 @@ func (txManager *AbstractTransactionManager) handleExistingTransaction(txObj Tra
 	return newDefaultTransactionStatus(txObj, txDef, nil)
 }
 
-func (txManager *AbstractTransactionManager) startTransaction(txObj TransactionObject, txDef TransactionDefinition) TransactionStatus {
+func (txManager *AbstractTransactionManager) startTransaction(txObj interface{}, txDef TransactionDefinition) TransactionStatus {
 	txSuspendedResources := txManager.suspendTransaction(txObj)
 	status := newDefaultTransactionStatus(txObj, txDef, txSuspendedResources)
 	txManager.DoBeginTransaction(txObj, txDef)
 	return status
 }
 
-func (txManager *AbstractTransactionManager) suspendTransaction(txObj TransactionObject) TransactionSuspendedResources {
+func (txManager *AbstractTransactionManager) suspendTransaction(txObj interface{}) interface{} {
 	return txManager.DoSuspendTransaction(txObj)
 }
 
-func (txManager *AbstractTransactionManager) resumeTransaction(txObj TransactionObject, txSuspendedResources TransactionSuspendedResources) {
+func (txManager *AbstractTransactionManager) resumeTransaction(txObj interface{}, txSuspendedResources interface{}) {
 	if txSuspendedResources != nil {
-		suspendedResources := txSuspendedResources.GetSuspendedResources()
-		if suspendedResources != nil {
-			txManager.DoResumeTransaction(txObj, suspendedResources)
-		}
+		txManager.DoResumeTransaction(txObj, txSuspendedResources)
 	}
 }

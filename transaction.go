@@ -2,14 +2,6 @@ package tx
 
 const TransactionMinTimeout = 1000
 
-type TransactionObject interface {
-	GetTransaction() interface{}
-}
-
-type TransactionSuspendedResources interface {
-	GetSuspendedResources() interface{}
-}
-
 type TransactionDefinitionOption func(definition *TransactionDefinition)
 
 type TransactionDefinition interface {
@@ -69,7 +61,7 @@ func (txDef *SimpleTransactionDefinition) IsReadOnly() bool {
 }
 
 type TransactionStatus interface {
-	GetTransactionObject() TransactionObject
+	GetTransactionObject() interface{}
 	GetTransactionDefinition() TransactionDefinition
 	IsCompleted() bool
 	SetCompleted()
@@ -77,13 +69,13 @@ type TransactionStatus interface {
 }
 
 type defaultTransactionStatus struct {
-	txObj              TransactionObject
+	txObj              interface{}
 	txDef              TransactionDefinition
 	isCompleted        bool
 	suspendedResources interface{}
 }
 
-func newDefaultTransactionStatus(txObj TransactionObject, txDef TransactionDefinition, suspendedResources interface{}) *defaultTransactionStatus {
+func newDefaultTransactionStatus(txObj interface{}, txDef TransactionDefinition, suspendedResources interface{}) *defaultTransactionStatus {
 	return &defaultTransactionStatus{
 		txObj,
 		txDef,
@@ -96,7 +88,7 @@ func (txStatus *defaultTransactionStatus) SetCompleted() {
 	txStatus.isCompleted = true
 }
 
-func (txStatus *defaultTransactionStatus) GetTransactionObject() TransactionObject {
+func (txStatus *defaultTransactionStatus) GetTransactionObject() interface{} {
 	return txStatus.txObj
 }
 
