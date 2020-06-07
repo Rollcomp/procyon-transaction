@@ -15,8 +15,8 @@ type TransactionManagerAdapter interface {
 
 type TransactionManager interface {
 	GetTransaction(txDef TransactionDefinition) TransactionStatus
-	Commit(txStatus TransactionStatus)
-	Rollback(txStatus TransactionStatus)
+	Commit(txStatus TransactionStatus) error
+	Rollback(txStatus TransactionStatus) error
 }
 
 type AbstractTransactionManager struct {
