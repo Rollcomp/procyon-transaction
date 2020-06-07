@@ -67,12 +67,9 @@ type SimpleTransactionResourcesManager struct {
 	resources TransactionResources
 }
 
-func NewSimpleTransactionResourcesManager(resources TransactionResources) SimpleTransactionResourcesManager {
-	if resources == nil {
-		panic("Transactional context must not be null")
-	}
+func NewSimpleTransactionResourcesManager() SimpleTransactionResourcesManager {
 	return SimpleTransactionResourcesManager{
-		resources,
+		NewSimpleTransactionResources(),
 	}
 }
 
@@ -87,7 +84,7 @@ func (resourceManager SimpleTransactionResourcesManager) GetResource(key interfa
 func (resourceManager SimpleTransactionResourcesManager) BindResource(key interface{}, value interface{}) {
 	resources := resourceManager.resources
 	if resources == nil {
-		panic("Transactional context resources must not be null")
+		panic("Transactional context resources must not be nil")
 	}
 	if resources.ContainsResource(key) {
 		panic("There is already added resource with same key in transactional context")
@@ -98,7 +95,7 @@ func (resourceManager SimpleTransactionResourcesManager) BindResource(key interf
 func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key interface{}) {
 	resources := resourceManager.resources
 	if resources == nil {
-		panic("Transactional context resources must not be null")
+		panic("Transactional context resources must not be nil")
 	}
 	if !resources.ContainsResource(key) {
 		panic("There is no resource for given key in transactional context")

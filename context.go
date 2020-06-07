@@ -17,9 +17,12 @@ type SimpleTransactionalContext struct {
 	transactionResourcesMgr TransactionResourcesManager
 }
 
-func NewSimpleTransactionalContext(transactionManager TransactionManager) *SimpleTransactionalContext {
-	if transactionManager != nil {
-		panic("Transaction Manager must not be null")
+func NewSimpleTransactionalContext(transactionManager TransactionManager, transactionResourcesManager TransactionResourcesManager) *SimpleTransactionalContext {
+	if transactionManager == nil {
+		panic("Transaction Manager must not be nil")
+	}
+	if transactionResourcesManager == nil {
+		panic("Transaction Resource Manager must not be nil")
 	}
 	contextId, err := uuid.NewUUID()
 	if err != nil {
@@ -28,13 +31,13 @@ func NewSimpleTransactionalContext(transactionManager TransactionManager) *Simpl
 	return &SimpleTransactionalContext{
 		contextId,
 		transactionManager,
-		NewSimpleTransactionResourcesManager(NewSimpleTransactionResources()),
+		transactionResourcesManager,
 	}
 }
 
 func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) {
 	if fun == nil {
-		panic("Transaction function must not be null")
+		panic("Transaction function must not be nil")
 	}
 	txBlockObject := NewTransactionBlockObject(fun, options...)
 	/* convert tx block object into tx block definition */
