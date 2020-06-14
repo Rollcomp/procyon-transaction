@@ -40,7 +40,7 @@ func (txBlockObj *TransactionBlockObject) IsReadOnly() bool {
 }
 
 type TransactionalBlock interface {
-	Block(fun TransactionalFunc, options ...TransactionBlockOption)
+	Block(fun TransactionalFunc, options ...TransactionBlockOption) error
 }
 
 func WithPropagation(propagation TransactionPropagation) TransactionBlockOption {

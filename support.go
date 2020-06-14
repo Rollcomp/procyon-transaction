@@ -1,21 +1,28 @@
 package tx
 
-import "log"
+import (
+	"errors"
+)
 
 type InvokeCallback func()
 
-func invokeWithinTransaction(txDef TransactionDefinition, txManager TransactionManager, invokeCallback InvokeCallback) {
+func invokeWithinTransaction(txDef TransactionDefinition, txManager TransactionManager, invokeCallback InvokeCallback) (err error) {
 	if invokeCallback == nil {
-		panic("Invoke Callback function must not be null")
+		err = errors.New("invoke Callback function must not be null")
+		return
 	}
 	/* create a transaction if necessary */
-	transactionStatus := createTransactionIfNecessary(txDef, txManager)
+	var transactionStatus TransactionStatus
+	transactionStatus, err = createTransactionIfNecessary(txDef, txManager)
+	if err != nil {
+		return
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			/* rollback transaction */
-			log.Printf("Transaction couldn't be completed successfully")
+			err = errors.New("transaction couldn't be completed successfully")
 			if txDef != nil && transactionStatus != nil {
-				txManager.Rollback(transactionStatus)
+				err = txManager.Rollback(transactionStatus)
 			}
 		}
 	}()
@@ -23,16 +30,16 @@ func invokeWithinTransaction(txDef TransactionDefinition, txManager TransactionM
 	invokeCallback()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("Transaction couldn't be committed")
+			err = errors.New("transaction couldn't be committed")
 		}
 	}()
 	/* complete transaction */
 	if txDef != nil && transactionStatus != nil {
-		log.Printf("Transaction has just been completed")
-		txManager.Commit(transactionStatus)
+		err = txManager.Commit(transactionStatus)
 	}
+	return
 }
 
-func createTransactionIfNecessary(txDef TransactionDefinition, txManager TransactionManager) TransactionStatus {
+func createTransactionIfNecessary(txDef TransactionDefinition, txManager TransactionManager) (TransactionStatus, error) {
 	return txManager.GetTransaction(txDef)
 }

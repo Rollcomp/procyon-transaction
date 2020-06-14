@@ -1,6 +1,9 @@
 package tx
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 type TransactionResources interface {
 	AddResource(key interface{}, resource interface{})
@@ -59,8 +62,8 @@ func (tr SimpleTransactionResources) RemoveResource(key interface{}) interface{}
 
 type TransactionResourcesManager interface {
 	GetResource(key interface{}) interface{}
-	BindResource(key interface{}, resource interface{})
-	UnBindResource(key interface{}) interface{}
+	BindResource(key interface{}, resource interface{}) error
+	UnBindResource(key interface{}) (interface{}, error)
 }
 
 type SimpleTransactionResourcesManager struct {
@@ -81,24 +84,25 @@ func (resourceManager SimpleTransactionResourcesManager) GetResource(key interfa
 	return resources.GetResource(key)
 }
 
-func (resourceManager SimpleTransactionResourcesManager) BindResource(key interface{}, value interface{}) {
+func (resourceManager SimpleTransactionResourcesManager) BindResource(key interface{}, value interface{}) error {
 	resources := resourceManager.resources
 	if resources == nil {
-		panic("Transactional context resources must not be nil")
+		return errors.New("transactional context resources must not be nil")
 	}
 	if resources.ContainsResource(key) {
-		panic("There is already added resource with same key in transactional context")
+		return errors.New("there is already added resource with same key in transactional context")
 	}
 	resources.AddResource(key, value)
+	return nil
 }
 
-func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key interface{}) interface{} {
+func (resourceManager SimpleTransactionResourcesManager) UnBindResource(key interface{}) (interface{}, error) {
 	resources := resourceManager.resources
 	if resources == nil {
-		panic("Transactional context resources must not be nil")
+		return nil, errors.New("transactional context resources must not be nil")
 	}
 	if !resources.ContainsResource(key) {
-		panic("There is no resource for given key in transactional context")
+		return nil, errors.New("there is no resource for given key in transactional context")
 	}
-	return resources.RemoveResource(key)
+	return resources.RemoveResource(key), nil
 }

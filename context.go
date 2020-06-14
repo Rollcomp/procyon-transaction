@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -17,27 +18,27 @@ type SimpleTransactionalContext struct {
 	transactionResourcesMgr TransactionResourcesManager
 }
 
-func NewSimpleTransactionalContext(transactionManager TransactionManager, transactionResourcesManager TransactionResourcesManager) *SimpleTransactionalContext {
+func NewSimpleTransactionalContext(transactionManager TransactionManager, transactionResourcesManager TransactionResourcesManager) (*SimpleTransactionalContext, error) {
 	if transactionManager == nil {
-		panic("Transaction Manager must not be nil")
+		return nil, errors.New("transaction Manager must not be nil")
 	}
 	if transactionResourcesManager == nil {
-		panic("Transaction Resource Manager must not be nil")
+		return nil, errors.New("transaction Resource Manager must not be nil")
 	}
 	contextId, err := uuid.NewUUID()
 	if err != nil {
-		panic("Transactional Context could be created, creating context id is failed")
+		return nil, errors.New("transactional Context could be created, creating context id is failed")
 	}
 	return &SimpleTransactionalContext{
 		contextId,
 		transactionManager,
 		transactionResourcesManager,
-	}
+	}, nil
 }
 
-func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) {
+func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) error {
 	if fun == nil {
-		panic("Transaction function must not be nil")
+		return errors.New("transaction function must not be nil")
 	}
 	txBlockObject := NewTransactionBlockObject(fun, options...)
 	/* convert tx block object into tx block definition */
@@ -47,7 +48,7 @@ func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options
 		WithTxTimeout(txBlockObject.timeOut),
 	)
 	/* invoke within transaction */
-	invokeWithinTransaction(txBlockDef, tContext.GetTransactionManager(), func() {
+	return invokeWithinTransaction(txBlockDef, tContext.GetTransactionManager(), func() {
 		txFunc := txBlockObject.fun
 		txFunc()
 	})
