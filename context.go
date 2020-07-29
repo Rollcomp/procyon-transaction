@@ -3,7 +3,19 @@ package tx
 import (
 	"errors"
 	"github.com/google/uuid"
+	"github.com/procyon-projects/procyon-core"
+	"sync"
 )
+
+var (
+	transactionContextPool sync.Pool
+)
+
+func initTransactionalContextPool() {
+	transactionContextPool = sync.Pool{
+		New: newSimpleTransactionalContext,
+	}
+}
 
 type TransactionalContext interface {
 	TransactionalBlock
@@ -14,26 +26,34 @@ type TransactionalContext interface {
 
 type SimpleTransactionalContext struct {
 	contextId               uuid.UUID
+	logger                  core.Logger
 	transactionManager      TransactionManager
 	transactionResourcesMgr TransactionResourcesManager
 }
 
-func NewSimpleTransactionalContext(transactionManager TransactionManager, transactionResourcesManager TransactionResourcesManager) (*SimpleTransactionalContext, error) {
+func newSimpleTransactionalContext() interface{} {
+	return &SimpleTransactionalContext{}
+}
+
+func NewSimpleTransactionalContext(contextId uuid.UUID,
+	logger core.Logger,
+	transactionManager TransactionManager,
+	transactionResourcesManager TransactionResourcesManager) (*SimpleTransactionalContext, error) {
+	if logger == nil {
+		return nil, errors.New("logger must not be nil")
+	}
 	if transactionManager == nil {
-		return nil, errors.New("transaction Manager must not be nil")
+		return nil, errors.New("transaction manager must not be nil")
 	}
 	if transactionResourcesManager == nil {
-		return nil, errors.New("transaction Resource Manager must not be nil")
+		return nil, errors.New("transaction resource Manager must not be nil")
 	}
-	contextId, err := uuid.NewUUID()
-	if err != nil {
-		return nil, errors.New("transactional Context could be created, creating context id is failed")
-	}
-	return &SimpleTransactionalContext{
-		contextId,
-		transactionManager,
-		transactionResourcesManager,
-	}, nil
+	transactionalContext := transactionContextPool.Get().(*SimpleTransactionalContext)
+	transactionalContext.contextId = contextId
+	transactionalContext.logger = logger
+	transactionalContext.transactionManager = transactionManager
+	transactionalContext.transactionResourcesMgr = transactionResourcesManager
+	return transactionalContext, nil
 }
 
 func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) error {
