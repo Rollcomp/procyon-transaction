@@ -85,3 +85,7 @@ func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionM
 func (tContext *SimpleTransactionalContext) GetTransactionResourcesManager() TransactionResourcesManager {
 	return tContext.transactionResourcesMgr
 }
+
+func (tContext *SimpleTransactionalContext) PutToPool() {
+	transactionContextPool.Put(tContext)
+}
