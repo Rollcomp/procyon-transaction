@@ -1,5 +1,7 @@
 package tx
 
+import context "github.com/procyon-projects/procyon-context"
+
 type TransactionalFunc func()
 type TransactionBlockOption func(txBlockObj *TransactionBlockObject)
 
@@ -40,7 +42,7 @@ func (txBlockObj *TransactionBlockObject) IsReadOnly() bool {
 }
 
 type TransactionalBlock interface {
-	Block(fun TransactionalFunc, options ...TransactionBlockOption) error
+	Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) error
 }
 
 func WithPropagation(propagation TransactionPropagation) TransactionBlockOption {

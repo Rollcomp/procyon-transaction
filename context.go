@@ -2,41 +2,27 @@ package tx
 
 import (
 	"errors"
-	"github.com/google/uuid"
+	context "github.com/procyon-projects/procyon-context"
 	"github.com/procyon-projects/procyon-core"
-	"sync"
 )
-
-var (
-	transactionContextPool sync.Pool
-)
-
-func initTransactionalContextPool() {
-	transactionContextPool = sync.Pool{
-		New: newSimpleTransactionalContext,
-	}
-}
 
 type TransactionalContext interface {
 	TransactionalBlock
-	GetContextId() uuid.UUID
 	GetTransactionManager() TransactionManager
 	GetTransactionResourcesManager() TransactionResourcesManager
 }
 
 type SimpleTransactionalContext struct {
-	contextId               uuid.UUID
 	logger                  core.Logger
 	transactionManager      TransactionManager
 	transactionResourcesMgr TransactionResourcesManager
 }
 
-func newSimpleTransactionalContext() interface{} {
+func newSimpleTransactionalContext() *SimpleTransactionalContext {
 	return &SimpleTransactionalContext{}
 }
 
-func NewSimpleTransactionalContext(contextId uuid.UUID,
-	logger core.Logger,
+func NewSimpleTransactionalContext(logger core.Logger,
 	transactionManager TransactionManager,
 	transactionResourcesManager TransactionResourcesManager) (*SimpleTransactionalContext, error) {
 	if logger == nil {
@@ -48,15 +34,17 @@ func NewSimpleTransactionalContext(contextId uuid.UUID,
 	if transactionResourcesManager == nil {
 		return nil, errors.New("transaction resource Manager must not be nil")
 	}
-	transactionalContext := transactionContextPool.Get().(*SimpleTransactionalContext)
-	transactionalContext.contextId = contextId
+	transactionalContext := newSimpleTransactionalContext()
 	transactionalContext.logger = logger
 	transactionalContext.transactionManager = transactionManager
 	transactionalContext.transactionResourcesMgr = transactionResourcesManager
 	return transactionalContext, nil
 }
 
-func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options ...TransactionBlockOption) error {
+func (tContext *SimpleTransactionalContext) Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) error {
+	if ctx == nil {
+		return errors.New("context must not be nil")
+	}
 	if fun == nil {
 		return errors.New("transaction function must not be nil")
 	}
@@ -68,14 +56,10 @@ func (tContext *SimpleTransactionalContext) Block(fun TransactionalFunc, options
 		WithTxTimeout(txBlockObject.timeOut),
 	)
 	/* invoke within transaction */
-	return invokeWithinTransaction(txBlockDef, tContext.GetTransactionManager(), func() {
+	return invokeWithinTransaction(tContext.logger, txBlockDef, tContext.GetTransactionManager(), func() {
 		txFunc := txBlockObject.fun
 		txFunc()
 	})
-}
-
-func (tContext *SimpleTransactionalContext) GetContextId() uuid.UUID {
-	return tContext.contextId
 }
 
 func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionManager {
@@ -84,8 +68,4 @@ func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionM
 
 func (tContext *SimpleTransactionalContext) GetTransactionResourcesManager() TransactionResourcesManager {
 	return tContext.transactionResourcesMgr
-}
-
-func (tContext *SimpleTransactionalContext) PutToPool() {
-	transactionContextPool.Put(tContext)
 }

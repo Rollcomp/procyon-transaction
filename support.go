@@ -2,11 +2,12 @@ package tx
 
 import (
 	"errors"
+	core "github.com/procyon-projects/procyon-core"
 )
 
 type InvokeCallback func()
 
-func invokeWithinTransaction(txDef TransactionDefinition, txManager TransactionManager, invokeCallback InvokeCallback) (err error) {
+func invokeWithinTransaction(logger core.Logger, txDef TransactionDefinition, txManager TransactionManager, invokeCallback InvokeCallback) (err error) {
 	if invokeCallback == nil {
 		err = errors.New("invoke Callback function must not be null")
 		return
