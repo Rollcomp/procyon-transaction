@@ -3,7 +3,6 @@ package tx
 import (
 	"errors"
 	context "github.com/procyon-projects/procyon-context"
-	"github.com/procyon-projects/procyon-core"
 )
 
 type TransactionalContext interface {
@@ -13,7 +12,7 @@ type TransactionalContext interface {
 }
 
 type SimpleTransactionalContext struct {
-	logger                  core.Logger
+	logger                  context.Logger
 	transactionManager      TransactionManager
 	transactionResourcesMgr TransactionResourcesManager
 }
@@ -22,7 +21,7 @@ func newSimpleTransactionalContext() *SimpleTransactionalContext {
 	return &SimpleTransactionalContext{}
 }
 
-func NewSimpleTransactionalContext(logger core.Logger,
+func NewSimpleTransactionalContext(logger context.Logger,
 	transactionManager TransactionManager,
 	transactionResourcesManager TransactionResourcesManager) (*SimpleTransactionalContext, error) {
 	if logger == nil {
