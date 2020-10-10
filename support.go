@@ -2,29 +2,43 @@ package tx
 
 import (
 	"errors"
+	"fmt"
 	context "github.com/procyon-projects/procyon-context"
+	"runtime/debug"
 )
 
 type InvokeCallback func()
 
-func invokeWithinTransaction(logger context.Logger, txDef TransactionDefinition, txManager TransactionManager, invokeCallback InvokeCallback) (err error) {
+func invokeWithinTransaction(context context.Context,
+	logger context.Logger,
+	txDef TransactionDefinition,
+	txManager TransactionManager,
+	invokeCallback InvokeCallback) {
 	if invokeCallback == nil {
-		err = errors.New("invoke Callback function must not be null")
-		return
+		panic("invoke Callback function must not be null")
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error(context, fmt.Sprintf("%s\n%s", r, string(debug.Stack())))
+		}
+	}()
 	/* create a transaction if necessary */
-	var transactionStatus TransactionStatus
-	transactionStatus, err = createTransactionIfNecessary(txDef, txManager)
+	transactionStatus, err := createTransactionIfNecessary(txDef, txManager)
 	if err != nil {
-		return
+		panic(err)
 	}
 	defer func() {
 		if r := recover(); r != nil {
 			/* rollback transaction */
 			err = errors.New("transaction couldn't be completed successfully")
+			logger.Error(context, err.Error())
 			if txDef != nil && transactionStatus != nil {
 				err = txManager.Rollback(transactionStatus)
+				if err != nil {
+					logger.Error(context, err.Error())
+				}
 			}
+			panic(r)
 		}
 	}()
 	/* invoke function */
@@ -32,13 +46,14 @@ func invokeWithinTransaction(logger context.Logger, txDef TransactionDefinition,
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New("transaction couldn't be committed")
+			logger.Error(context, err.Error())
+			panic(r)
 		}
 	}()
 	/* complete transaction */
 	if txDef != nil && transactionStatus != nil {
 		err = txManager.Commit(transactionStatus)
 	}
-	return
 }
 
 func createTransactionIfNecessary(txDef TransactionDefinition, txManager TransactionManager) (TransactionStatus, error) {

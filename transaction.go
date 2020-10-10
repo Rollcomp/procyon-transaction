@@ -1,16 +1,25 @@
 package tx
 
+import context "github.com/procyon-projects/procyon-context"
+
 const TransactionMinTimeout = 1000
 
 type TransactionDefinitionOption func(definition *TransactionDefinition)
 
 type TransactionDefinition interface {
+	GetContext() context.Context
 	GetTimeout() int
 	GetPropagation() TransactionPropagation
 	IsReadOnly() bool
 }
 
 type SimpleTransactionDefinitionOption func(txDef *SimpleTransactionDefinition)
+
+func WithTxContext(ctx context.Context) SimpleTransactionDefinitionOption {
+	return func(txDef *SimpleTransactionDefinition) {
+		txDef.context = ctx
+	}
+}
 
 func WithTxPropagation(propagation TransactionPropagation) SimpleTransactionDefinitionOption {
 	return func(txDef *SimpleTransactionDefinition) {
@@ -31,6 +40,7 @@ func WithTxReadOnly(readOnly bool) SimpleTransactionDefinitionOption {
 }
 
 type SimpleTransactionDefinition struct {
+	context     context.Context
 	propagation TransactionPropagation
 	timeOut     int
 	readOnly    bool
@@ -38,6 +48,7 @@ type SimpleTransactionDefinition struct {
 
 func NewSimpleTransactionDefinition(options ...SimpleTransactionDefinitionOption) *SimpleTransactionDefinition {
 	def := &SimpleTransactionDefinition{
+		nil,
 		PropagationRequired,
 		-1,
 		false,
@@ -46,6 +57,10 @@ func NewSimpleTransactionDefinition(options ...SimpleTransactionDefinitionOption
 		option(def)
 	}
 	return def
+}
+
+func (txDef *SimpleTransactionDefinition) GetContext() context.Context {
+	return txDef.context
 }
 
 func (txDef *SimpleTransactionDefinition) GetPropagation() TransactionPropagation {
