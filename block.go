@@ -42,7 +42,7 @@ func (txBlockObj *TransactionBlockObject) IsReadOnly() bool {
 }
 
 type TransactionalBlock interface {
-	Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) error
+	Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) (interface{}, error)
 }
 
 func WithPropagation(propagation TransactionPropagation) TransactionBlockOption {
