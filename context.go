@@ -39,7 +39,7 @@ func NewSimpleTransactionalContext(logger context.Logger,
 	return transactionalContext
 }
 
-func (tContext *SimpleTransactionalContext) Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) {
+func (tContext *SimpleTransactionalContext) Block(ctx context.Context, fun TransactionalFunc, options ...TransactionBlockOption) (interface{}, error) {
 	if ctx == nil {
 		panic("context must not be nil")
 	}
@@ -55,13 +55,14 @@ func (tContext *SimpleTransactionalContext) Block(ctx context.Context, fun Trans
 		WithTxTimeout(txBlockObject.timeOut),
 	)
 	/* invoke within transaction */
-	err := invokeWithinTransaction(ctx, tContext.logger, txBlockDef, tContext.GetTransactionManager(), func() error {
+	result, err := invokeWithinTransaction(ctx, tContext.logger, txBlockDef, tContext.GetTransactionManager(), func() (interface{}, error) {
 		txFunc := txBlockObject.fun
 		return txFunc()
 	})
 	if err != nil {
 		panic(err)
 	}
+	return result, err
 }
 
 func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionManager {

@@ -2,7 +2,7 @@ package tx
 
 import context "github.com/procyon-projects/procyon-context"
 
-type TransactionalFunc func() error
+type TransactionalFunc func() (interface{}, error)
 type TransactionBlockOption func(txBlockObj *TransactionBlockObject)
 
 type TransactionBlockObject struct {

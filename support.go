@@ -7,13 +7,13 @@ import (
 	"runtime/debug"
 )
 
-type InvokeCallback func() error
+type InvokeCallback func() (interface{}, error)
 
 func invokeWithinTransaction(context context.Context,
 	logger context.Logger,
 	txDef TransactionDefinition,
 	txManager TransactionManager,
-	invokeCallback InvokeCallback) error {
+	invokeCallback InvokeCallback) (interface{}, error) {
 	if invokeCallback == nil {
 		panic("invoke Callback function must not be null")
 	}
@@ -42,7 +42,8 @@ func invokeWithinTransaction(context context.Context,
 		}
 	}()
 	/* invoke function */
-	err = invokeCallback()
+	var result interface{}
+	result, err = invokeCallback()
 	if err != nil {
 		if txDef != nil && transactionStatus != nil {
 			err = txManager.Rollback(transactionStatus)
@@ -50,7 +51,7 @@ func invokeWithinTransaction(context context.Context,
 				logger.Error(context, err.Error())
 			}
 		}
-		return err
+		return result, err
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -63,7 +64,7 @@ func invokeWithinTransaction(context context.Context,
 	if txDef != nil && transactionStatus != nil {
 		err = txManager.Commit(transactionStatus)
 	}
-	return nil
+	return result, nil
 }
 
 func createTransactionIfNecessary(txDef TransactionDefinition, txManager TransactionManager) (TransactionStatus, error) {
