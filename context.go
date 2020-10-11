@@ -55,10 +55,13 @@ func (tContext *SimpleTransactionalContext) Block(ctx context.Context, fun Trans
 		WithTxTimeout(txBlockObject.timeOut),
 	)
 	/* invoke within transaction */
-	invokeWithinTransaction(ctx, tContext.logger, txBlockDef, tContext.GetTransactionManager(), func() {
+	err := invokeWithinTransaction(ctx, tContext.logger, txBlockDef, tContext.GetTransactionManager(), func() error {
 		txFunc := txBlockObject.fun
-		txFunc()
+		return txFunc()
 	})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (tContext *SimpleTransactionalContext) GetTransactionManager() TransactionManager {
